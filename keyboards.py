@@ -92,8 +92,8 @@ async def to_subcategory(category, loop):
         s = item["name"]
         if s == '&quot;Double Pizza&quot; пиццы с двойным сырным дном ':
             s = 'Пиццы с двойным сырным дном'
-
-        image = Button(action_body=f'to-subcat-{item["id"]}', columns=6, rows=5, action_type="reply",
+        print(s)
+        image = Button(action_body=f'to-subcat-{item["id"]}', columns=6, rows=5, text=s, text_opacity=1, action_type="reply",
                        image=f"https://pizzacoffee.by/{item['picture']}")
 
         title_and_text = Button(action_body=f'to-subcat-{item["id"]}', columns=6, rows=1, action_type="reply",
@@ -112,7 +112,7 @@ async def pizza_keyboard(p_id):
         s = str(item['name'])
         s = s.replace("&quot;", "'")
         image = Button(action_body=f"get-more-info-{key}", columns=6, rows=5, action_type="reply",
-                       image=f"https://pizzacoffee.by/{item['picture']}")
+                       image=f"https://pizzacoffee.by/{item['picture']}", text=item['name'], text_opacity=1)
 
         title_and_text = Button(action_body=f"get-more-info-{key}", columns=6, rows=1, action_type="reply",
                                 text=f'<font color=#323232><b>{s}</b></font>', text_size="medium",

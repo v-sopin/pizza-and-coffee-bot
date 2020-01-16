@@ -124,16 +124,16 @@ async def name_i(p_id, c_id):
 
 
 async def json_(u_id, loop):
-    phone, name, products, items, counts = await db.get_for_json(u_id, loop)
+    user = await db.get_user_obj(u_id, loop)
+    items = await db.get_user_basket_items(u_id, loop)
+
     r = []
-    for product, item, count in zip(products, items, counts):
-        p_name = await name_i(product[0], item[0])
-        #price = await get_price(product[0], item[0])
-        r.append(({"id": item[0], "name": p_name, "price": price, "quantity": count[0]}))
+    for item in items:
+        r.append({"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count})
     res = json.dumps(r)
-    link = f"https://pizzacoffee.by/api/?e=order&login={phone[0]}&password={phone[0]}&username={name[0]}&phone={phone[0]}&products={res}&token=1"
+    link = f"https://pizzacoffee.by/api/?e=order&login={user.phone_number}&password={user.phone_number}&username={user.full_name}&phone={user.phone_number}&products={res}&token=1"
     new_link = str(link.replace('[', ''))
     new_link = new_link.replace(']', '')
     print(new_link)
     responce = requests.post(new_link, verify=False)
-    print(responce.text)
+    print(responce.json())

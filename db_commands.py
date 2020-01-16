@@ -1,6 +1,7 @@
 import aiomysql
 from pymysql import connect
 from config import DB_NAME, DB_HOST, DB_PASSWORD, DB_USER
+from models import User, Basket
 import datetime
 
 
@@ -29,6 +30,17 @@ class Com:
             return True
         else:
             return False
+
+    @staticmethod
+    async def get_user_obj(id, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('select * from users where id = %s', id)
+        user = await cur.fetchone()
+
+        if user is None:
+            return None
+
+        return User(user[0], user[1], user[2], user[3], user[4], user[5], user[6], user[7])
 
     @staticmethod
     async def add_user(id, city, full_name, phone_number, context, loop):
@@ -117,17 +129,28 @@ class Com:
         con.close()
 
     @staticmethod
-    async def add_item_to_basket(id, i_id, c_id, price, loop):
+    async def add_item_to_basket(id, i_id, c_id, price, name, loop):
         con, cur = await create_con(loop)
 
         if price == '' or price == ' ':
-            await cur.execute('insert into basket values(%s, %s, %s, %s, %s)', (id, i_id, c_id, 0, 0))
+            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, 0, name))
             await con.commit()
             con.close()
         else:
-            await cur.execute('insert into basket values(%s, %s, %s, %s, %s)', (id, i_id, c_id, 0, float(price)))
+            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, float(price), name))
             await con.commit()
             con.close()
+
+    @staticmethod
+    async def get_user_basket_items(u_id, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('select * from basket where u_id = %s', u_id)
+        items = await cur.fetchall()
+
+        result = []
+        for item in items:
+            result.append(Basket(item[0], item[1], item[2], item[3], item[4], item[5]))
+        return result
 
     @staticmethod
     async def update_count_to_basket(id, c_id, count, loop):
