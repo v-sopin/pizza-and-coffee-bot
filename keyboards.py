@@ -92,7 +92,7 @@ async def to_subcategory(category, loop):
         s = item["name"]
         if s == '&quot;Double Pizza&quot; пиццы с двойным сырным дном ':
             s = 'Пиццы с двойным сырным дном'
-        print(s)
+
         image = Button(action_body=f'to-subcat-{item["id"]}', columns=6, rows=5, text=s, text_opacity=1, action_type="reply",
                        image=f"https://pizzacoffee.by/{item['picture']}")
 

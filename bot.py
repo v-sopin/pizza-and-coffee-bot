@@ -91,15 +91,12 @@ async def test(chat: Chat, matched):
 async def show_subcat(chat, category_id):
     u_id = chat.message.sender.id
     categories = await search.subcat(category_id)
-    print(categories)
-    print(categories.keys())
     categories_keys = list(categories.keys())
     buttons = []
     i = 0
     tmp_list = []
     while i < len(categories_keys):
         tmp_category = categories[categories_keys[i]]
-        print(tmp_category['name'])
         image = Button(action_body='show_' + str(categories_keys[i]), columns=6, rows=5, text="{}".format(tmp_category['name'].replace('&quot;', '')), text_opacity=1, action_type="reply",
                        image='https://pizzacoffee.by/' + tmp_category['picture'])
 
@@ -144,7 +141,6 @@ async def show_pizza(chat, products, product_keys, category_id):
         else:
             price = list(product['prices'])[0]["PRICE"]
         if product.get('name') is None:
-            print('skip')
             i += 1
             skip_count += 1
             continue
@@ -165,8 +161,7 @@ async def show_pizza(chat, products, product_keys, category_id):
         buttons.append(title_and_text)
         buttons.append(item_info)
         i += 1
-    print(tmp_list)
-    print(i)
+
     i -= skip_count
     i *= 3
     while i > 0:
@@ -200,7 +195,6 @@ async def show_products(chat: Chat, matched):
     product_keys = list(products.keys())
     subcat = ['22', '23']
     if category_id in subcat:
-        print('Subcat')
         await show_subcat(chat, category_id)
         return
     pizza_cat = ['35', '36', '41']
@@ -213,9 +207,7 @@ async def show_products(chat: Chat, matched):
     tmp_list: List[Button] = []
     while i < len(product_keys):
         product = products[product_keys[i]]
-        print(product['prices'])
         if product.get('name') is None:
-            print('skip')
             i += 1
             skip_count += 1
             continue
@@ -243,11 +235,9 @@ async def show_products(chat: Chat, matched):
         buttons.append(title_and_text)
         buttons.append(item_info)
         i += 1
-    print(tmp_list)
-    print(i)
     i -= skip_count
     i *= 3
-    print(tmp_list)
+
     while i > 0:
         if i > 17:
             tmp_i = i - 18
@@ -394,7 +384,7 @@ async def to_cart(chat: Chat, matched):
                 text, url, price = await search.more_info(item[0])
                 count = await db.get_count(item[0], loop)
                 text += ' x ' + str(count)
-                print(text)
+
                 image = Button(action_body=f'none', columns=6, rows=4, action_type="open-url",
                                image=f"https://pizzacoffee.by/{url}")  # resized
 
@@ -425,7 +415,7 @@ async def to_cart(chat: Chat, matched):
 async def p(chat: Chat, matched):
     u_id = chat.message.sender.id
     item = chat.message.message.text[7:]
-    print(item)
+
     await db.delete_from_basket(u_id, item, loop)
     await chat.send_text('Товар удален из корзины', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
 
@@ -844,7 +834,7 @@ async def default(chat: Chat):
             if count.isdigit():
                 await chat.send_text('Товар добавлен в корзину!', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
                 i_id = await db.get_more_c_id(u_id, loop)
-                print(i_id)
+
                 await db.update_count_to_basket(u_id, i_id, count, loop)
                 await db.update_context(u_id, '', loop)
             else:

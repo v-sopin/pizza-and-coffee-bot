@@ -15,7 +15,6 @@ def get_products(categories, city):
     with urllib.request.urlopen('https://pizzacoffee.by/api/?e=products&parent=' + categories +
                                 '&token=1&city=' + city) as url:
         data = json.loads(url.read())
-        print(data)
         return data
 
 
@@ -37,7 +36,6 @@ async def sections(city):
 async def subcat(p_id):
     with urllib.request.urlopen(f'https://pizzacoffee.by/api/?e=sections&parent={p_id}&token=1') as url:
         data = json.loads(url.read())
-        print(data)
         return data
 
 
@@ -48,10 +46,9 @@ async def subcat_pizza(p_id):
                            f'https://pizzacoffee.by/api/?e=products&parent={p_id}&token=1')
         result = []
         keys = []
-        print(p_id)
         for key, value in html.items():
             if value == None or value['name'] == None:
-                print('NNNN')
+                pass
             else:
                 result.append(value)
                 keys.append(key)
@@ -89,7 +86,6 @@ async def more_info(product_id):
 
 async def get_price(product_id):
     products = get_all_products()
-    print(products.keys())
     product = products[str(product_id)]
     if len(product['prices']) == 0:
         price = product['offers'][list(product['offers'].keys())[0]]['price']
@@ -102,7 +98,7 @@ async def get_price(product_id):
 async def get():
     items, keys = await subcat_pizza(35)
     for value in items:
-        print("value:", value['name'])
+        pass
 
 
 async def get_city():
@@ -134,6 +130,4 @@ async def json_(u_id, loop):
     link = f"https://pizzacoffee.by/api/?e=order&login={user.phone_number}&password={user.phone_number}&username={user.full_name}&phone={user.phone_number}&products={res}&token=1"
     new_link = str(link.replace('[', ''))
     new_link = new_link.replace(']', '')
-    print(new_link)
     responce = requests.post(new_link, verify=False)
-    print(responce.json())

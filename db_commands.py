@@ -155,8 +155,6 @@ class Com:
     @staticmethod
     async def update_count_to_basket(id, c_id, count, loop):
         con, cur = await create_con(loop)
-        print(count)
-        print(c_id)
         await cur.execute('update basket set count=%s where u_id = %s and i_id = %s', (count, id, c_id))
         await con.commit()
         con.close()
@@ -193,7 +191,6 @@ class Com:
         await cur.execute('select count from basket where u_id = %s', (id))
         counts = await cur.fetchall()
         con.close()
-        print(phone[0], name[0], products, items, counts)
         return phone[0], name[0], products, items, counts
 
     @staticmethod
@@ -337,8 +334,6 @@ class Com:
     @staticmethod
     async def update_more_info_c_id(id, p_id, loop):
         con, cur = await create_con(loop)
-        print(id)
-        print(p_id)
         await cur.execute('update users set c_id = %s where id = %s', (p_id, id))
         await con.commit()
         con.close()
