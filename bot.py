@@ -3,6 +3,7 @@ import asyncio
 from typing import List
 
 from viberbot.api.messages.picture_message import PictureMessage
+from viberbot.api.messages.text_message import TextMessage
 from aioviber.bot import Bot
 from aioviber.chat import Chat, Carousel, Keyboard
 from aioviber.keyboard import Button
@@ -22,7 +23,7 @@ bot = Bot(
     auth_token="4a9fa7bc7be7d06d-8c8bbe61274fbc68-6304c5f4046657f6",  # Public account auth token
     host="localhost",  # should be available from wide area network
     port=8000,
-    webhook='https://3610764e.ngrok.io',  # Webhook url
+    webhook='https://2e843d1c.ngrok.io',  # Webhook url
 )
 loop.run_until_complete(bot.set_webhook_on_startup())
 app = bot.app
@@ -304,6 +305,13 @@ async def add(chat: Chat, matched):
     await db.update_context(u_id, '', loop)
 
 
+@bot.command('back-to-admin')
+async def add(chat: Chat, matched):
+    u_id = chat.message.sender.id
+    await chat.send_text('Панель администратора', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
+    await db.update_context(u_id, '', loop)
+    await db.update_more_info_c_id(u_id, 0, loop)
+
 '''
 
     Изменение города
@@ -528,7 +536,7 @@ async def admin(chat: Chat, matched):
     u_id = chat.message.sender.id
     button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
                      text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center', bg_color='#2F1AB2')]
+                     text_h_align='center')]
     result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
     await chat.send_text('Введите пароль')
     await chat.send_rich_media(rich_media=result)
@@ -642,7 +650,7 @@ async def ras(chat: Chat, matched):
 async def send_to_all(chat: Chat, matched):
     u_id = chat.message.sender.id
     await chat.send_text('Какой тип сообщения вы хотите отправить?', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
-    await db.update_more_info_c_id(u_id, 'one-or-more', loop)
+    await db.update_more_info_c_id(u_id, 'send-to-all', loop)
 
 
 @bot.command('pb-n-less')
@@ -664,9 +672,8 @@ async def ph(chat: Chat, matched):
     button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
                      text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
                      text_h_align='center', bg_color='#2F1AB2')]
-    result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
     await chat.send_text('Ожидаю картинку')
-    await chat.send_rich_media(rich_media=result)
+    await chat.send_rich_media(rich_media=Carousel(6, 1, [kb.back_to_admin]))
 
 
 @bot.command('ras-text')
@@ -676,9 +683,8 @@ async def ph(chat: Chat, matched):
     button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
                      text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
                      text_h_align='center', bg_color='#2F1AB2')]
-    result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
     await chat.send_text('Ожидаю текст')
-    await chat.send_rich_media(rich_media=result)
+    await chat.send_rich_media(rich_media=Carousel(6, 1, [kb.back_to_admin]))
 
 
 @bot.message_handler('picture')
@@ -692,21 +698,25 @@ async def sp(chat: Chat):
             users = await db.get_all_users(loop)
             users_from_orders = await db.users_from_orders(loop)
             for user in users:
-                if user in users_from_orders:
-                    a = 0
-                else:
+                if user not in users_from_orders:
                     no_users.append(user)
             for user in no_users:
-                await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                try:
+                    await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                except Exception:
+                    pass
             await chat.send_text(f'Количество отправленных сообщений: {len(no_users)}',
-                                 keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                 keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             await db.update_more_info_c_id(u_id, 0, loop)
         elif podcontext == 'one-or-more':
             users_from_orders = await db.users_from_orders(loop)
             for user in users_from_orders:
-                await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                try:
+                    await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                except Exception:
+                    pass
             await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                 keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                 keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             await db.update_more_info_c_id(u_id, 0, loop)
         elif podcontext == 'more-n':
             n = await db.get_more_info(u_id, loop)
@@ -718,12 +728,15 @@ async def sp(chat: Chat):
                     res.append(user)
             if len(res) != 0:
                 for user in res:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
         elif podcontext == 'm-or-more-month':
             n = await db.get_more_info(u_id, loop)
             res = []
@@ -734,12 +747,15 @@ async def sp(chat: Chat):
                     res.append(user)
             if len(res) != 0:
                 for user in res:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
         elif podcontext == 'sr-sum-more':
             n = await db.get_more_info(u_id, loop)
             res = []
@@ -750,12 +766,15 @@ async def sp(chat: Chat):
                     res.append(user)
             if len(res) != 0:
                 for user in res:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
         elif podcontext == 'sr-sum-less':
             n = await db.get_more_info(u_id, loop)
             res = []
@@ -766,42 +785,54 @@ async def sp(chat: Chat):
                     res.append(user)
             if len(res) != 0:
                 for user in res:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
         elif podcontext == 'pb-n-more':
             n = await db.get_more_info(u_id, loop)
             users_from_orders = await db.users_from_orders_more_n_date(n, loop)
             if users_from_orders != None:
                 for user in users_from_orders:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
         elif podcontext == 'pb-n-less':
             n = await db.get_more_info(u_id, loop)
             users_from_orders = await db.users_from_orders_less_n_date(n, loop)
             if users_from_orders != None:
                 for user in users_from_orders:
-                    await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                    try:
+                        await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             else:
-                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
         elif podcontext == 'send-to-all':
             all_users = await db.get_all_users(loop)
             for user in all_users:
-                await chat.send_picture_plus(picture=chat.message.message.media, to=str(user))
+                try:
+                    await bot.api.send_message(str(user), PictureMessage(media=chat.message.message.media))
+                except Exception:
+                    pass
             await chat.send_text(f'Количество отправленных сообщений: {len(all_users)}',
-                                 keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                 keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             await db.update_more_info_c_id(u_id, 0, loop)
 
 
@@ -855,7 +886,19 @@ async def default(chat: Chat):
                     await db.update_city(u_id, key, loop)
                     await db.update_context(u_id, ' ', loop)
         elif context == 'wait_N':
-            await db.update_more_info(u_id, int(chat.message.message.text), loop)
+            try:
+                n = int(chat.message.message.text)
+            except Exception:
+                await chat.send_text('Не корректный формат, введите количество цифрой')
+                await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
+                return
+
+            if n < 0:
+                await chat.send_text('Не может быть отрицательным')
+                await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
+                return
+
+            await db.update_more_info(u_id, n, loop)
             await chat.send_text('Какой тип сообщения вы хотите отправить?',
                                  keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
 
@@ -867,20 +910,26 @@ async def default(chat: Chat):
                 users_from_orders = await db.users_from_orders(loop)
                 for user in users:
                     if user in users_from_orders:
-                        a = 0
+                        pass
                     else:
                         no_users.append(user)
                 for user in no_users:
-                    await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                    try:
+                        await bot.api.send_message(to=str(user), message=TextMessage(text=chat.message.message.text))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(no_users)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             if podcontext == 'one-or-more':
                 users_from_orders = await db.users_from_orders(loop)
                 for user in users_from_orders:
-                    await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                    try:
+                        await bot.api.send_message(to=str(user), message=TextMessage(text=chat.message.message.text))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
             elif podcontext == 'more-n':
                 n = await db.get_more_info(u_id, loop)
@@ -892,12 +941,16 @@ async def default(chat: Chat):
                         res.append(user)
                 if len(res) != 0:
                     for user in res:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             elif podcontext == 'm-or-more-month':
                 n = await db.get_more_info(u_id, loop)
                 res = []
@@ -908,12 +961,16 @@ async def default(chat: Chat):
                         res.append(user)
                 if len(res) != 0:
                     for user in res:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             elif podcontext == 'sr-sum-more':
                 n = await db.get_more_info(u_id, loop)
                 res = []
@@ -924,12 +981,16 @@ async def default(chat: Chat):
                         res.append(user)
                 if len(res) != 0:
                     for user in res:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             elif podcontext == 'sr-sum-less':
                 n = await db.get_more_info(u_id, loop)
                 res = []
@@ -940,42 +1001,58 @@ async def default(chat: Chat):
                         res.append(user)
                 if len(res) != 0:
                     for user in res:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(res)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
             elif podcontext == 'pb-n-less':
                 n = await db.get_more_info(u_id, loop)
                 users_from_orders = await db.users_from_orders_less_n_date(n, loop)
                 if users_from_orders != None:
                     for user in users_from_orders:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
             elif podcontext == 'pb-n-more':
                 n = await db.get_more_info(u_id, loop)
                 users_from_orders = await db.users_from_orders_more_n_date(n, loop)
                 if users_from_orders != None:
                     for user in users_from_orders:
-                        await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                        try:
+                            await bot.api.send_message(to=str(user),
+                                                       message=TextMessage(text=chat.message.message.text))
+                        except Exception:
+                            pass
                     await chat.send_text(f'Количество отправленных сообщений: {len(users_from_orders)}',
-                                         keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                         keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
                 else:
-                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                    await chat.send_text('Нет таких пользователей', keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                     await db.update_more_info_c_id(u_id, 0, loop)
             elif podcontext == 'send-to-all':
                 all_users = await db.get_all_users(loop)
                 for user in all_users:
-                    await chat.send_text_plus(to=str(u_id), text=chat.message.message.text)
+                    try:
+                        await bot.api.send_message(to=str(user),
+                                                   message=TextMessage(text=chat.message.message.text))
+                    except Exception:
+                        pass
                 await chat.send_text(f'Количество отправленных сообщений: {len(all_users)}',
-                                     keyboard=Keyboard(kb.ras_cat, bg_color="#FFFFFF"))
+                                     keyboard=Keyboard(kb.adim_kb, bg_color="#FFFFFF"))
                 await db.update_more_info_c_id(u_id, 0, loop)
         elif context == 'wait_fio':
             fio = chat.message.message.text
@@ -986,9 +1063,20 @@ async def default(chat: Chat):
             tel = chat.message.message.text
             await db.update_tel(u_id, tel, loop)
             await db.update_context(u_id, '', loop)
-            await search.json_(u_id, loop)
-            await chat.send_text('Ваш заказ оформлен, ожидайте звонка оператора.',
+            status, error_msg = await search.json_(u_id, loop)
+
+            if status is True:
+                await chat.send_text('Ваш заказ оформлен, ожидайте звонка оператора.',
                                  keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
+                items_in_cart = await db.get_user_basket_items(u_id, loop)
+                totap_price = 0
+                for item in items_in_cart:
+                    totap_price += item.price
+                await db.add_order(u_id, totap_price, loop)
+                await db.clear_user_basket(u_id, loop)
+            else:
+                await chat.send_text(f'При оформлении заказа произошла ошибка: {error_msg}',
+                                     keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
 
         elif context == 'wait_start_date':
             date = chat.message.message.text
@@ -997,9 +1085,11 @@ async def default(chat: Chat):
                 await db.update_context(u_id, 'wait_finish_date', loop)
                 await db.update_more_info(u_id, date, loop)
                 await chat.send_text('Введите дату конца отчетного периода в формате ГГГГ-ММ-ДД')
+                await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
             except ValueError:
                 await chat.send_text(
                     'Вы ввели неправильный формат даты. Введите пожалуйста в таком формате: ГГГГ-ММ-ДД')
+                await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
         elif context == 'wait_finish_date':
             f_date = chat.message.message.text
             try:
@@ -1009,7 +1099,7 @@ async def default(chat: Chat):
                 new_users = await db.get_cont_new_users(s_date, f_date, loop)
                 out_users = await db.get_cont_out_users(s_date, f_date, loop)
                 count_orders = await db.get_cont_orders(s_date, f_date, loop)
-                city = ['baranovichi', 'bobruysk', 'volkovisk', 'grodno', 'zhlobin', 'slutsk', 'vitebsk']
+                city = ['baranovichi', 'bobruysk', 'volkovisk', 'default', 'zhlobin', 'slutsk', 'vitebsk']
                 c_count = []
                 for c in city:
                     p = await db.get_users_city(c, loop)
@@ -1027,11 +1117,12 @@ async def default(chat: Chat):
                          f'\n -Слуцк:{c_count[5]};' \
                          f'\n -Витебск:{c_count[6]};'
 
-                await chat.send_text(text)
-                await chat.send_text(text_2)
+                await chat.send_text(text, keyboard=Keyboard(kb.adim_kb))
+                await chat.send_text(text_2, keyboard=Keyboard(kb.adim_kb))
             except ValueError:
                 await chat.send_text(
                     'Вы ввели неправильный формат даты. Введите пожалуйста в таком формате: ГГГГ-ММ-ДД')
+                await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
         else:
             await chat.send_text('Приступай к покупкам!', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
 
@@ -1047,6 +1138,7 @@ async def default(chat: Chat):
 async def stat(chat: Chat, matched):
     u_id = chat.message.sender.id
     await chat.send_text('Введите дату начала отчетного периода в формате ГГГГ-ММ-ДД')
+    await chat.send_rich_media(Carousel(6, 1, [kb.back_to_admin]))
     await db.update_context(u_id, 'wait_start_date', loop)
 
 

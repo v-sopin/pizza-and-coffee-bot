@@ -201,6 +201,13 @@ class Com:
         con.close()
 
     @staticmethod
+    async def clear_user_basket(id, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('delete from basket where u_id = %s', (id))
+        await con.commit()
+        con.close()
+
+    @staticmethod
     async def clear_users(loop):
         con, cur = await create_con(loop)
         await cur.execute('delete from users')
@@ -238,6 +245,14 @@ class Com:
         users = await cur.fetchall()
         con.close()
         return users
+
+    @staticmethod
+    async def add_order(u_id, sum, loop):
+        con, cur = await create_con(loop)
+        datetime_now = datetime.datetime.today()
+        await cur.execute('insert into orders values(%s, %s, %s)', (u_id, sum, datetime_now))
+        await con.commit()
+        con.close()
 
     @staticmethod
     async def users_from_orders(loop):

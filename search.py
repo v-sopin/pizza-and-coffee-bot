@@ -127,7 +127,17 @@ async def json_(u_id, loop):
     for item in items:
         r.append({"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count})
     res = json.dumps(r)
+
     link = f"https://pizzacoffee.by/api/?e=order&login={user.phone_number}&password={user.phone_number}&username={user.full_name}&phone={user.phone_number}&products={res}&token=1"
     new_link = str(link.replace('[', ''))
     new_link = new_link.replace(']', '')
-    responce = requests.post(new_link, verify=False)
+
+    async with aiohttp.ClientSession() as session:
+        html = await fetch(session, new_link)
+        if html.get('success') is not None:
+            return True, ''
+        if html.get('error') is not None:
+            return False, html['error']
+
+        return True, ''
+

@@ -54,17 +54,19 @@ Button(action_body="pb-n-more", columns=6, rows=1, bg_color="#ffffff", silent=Tr
               text_v_align="middle"),
 Button(action_body="send-to-all", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
               text='Всем пользователям', text_size="regular", text_opacity=60, text_h_align="center",text_v_align="middle"),
-       Button(action_body="otmena", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
+       Button(action_body="back-to-admin", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
               text='Назад', text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle")]
 
 ras_cat = [Button(action_body="ras-photo", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
               text='Картинка', text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"),
            Button(action_body="ras-text", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
                   text='Текст', text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"),
-Button(action_body="otmena", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
+Button(action_body="back-to-admin", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
               text='Назад', text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle")
            ]
 
+back_to_admin = Button(action_body="back-to-admin", columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
+              text='Назад', text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle")
 
 async def items_keyboard(category):
     items, keys = await search.subcat_pizza(category)
