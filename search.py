@@ -6,14 +6,15 @@ from db_commands import Com as db
 
 
 def get_all_products():
-    with urllib.request.urlopen('https://pizzacoffee.by/api/?e=products&token=1') as url:
+    with urllib.request.urlopen('https://pizzacoffee.by/api/?e=products&token=1&resized_picture=w:700,h:500') as url:
         data = json.loads(url.read())
         return data
 
 
 def get_products(categories, city):
-    with urllib.request.urlopen('https://pizzacoffee.by/api/?e=products&parent=' + categories +
-                                '&token=1&city=' + city) as url:
+    url = 'https://pizzacoffee.by/api/?e=products&parent=' + categories + '&token=1&city=' + city + '&resized_picture=w:700,h:500'
+    print(url)
+    with urllib.request.urlopen(url) as url:
         data = json.loads(url.read())
         return data
 
@@ -25,16 +26,17 @@ async def fetch(session, url):
 
 async def sections(city):
     async with aiohttp.ClientSession() as session:
-        html = await fetch(session, f'https://pizzacoffee.by/api/?e=sections&token=1&city={city}')
+        html = await fetch(session, f'https://pizzacoffee.by/api/?e=sections&token=1&city={city}&resized_picture=w:700,h:500')
         result = []
         for key, value in html.items():
             if value["show_main"] == "1":
                 result.append(value)
+        print(result)
     return result
 
 
 async def subcat(p_id):
-    with urllib.request.urlopen(f'https://pizzacoffee.by/api/?e=sections&parent={p_id}&token=1') as url:
+    with urllib.request.urlopen(f'https://pizzacoffee.by/api/?e=sections&parent={p_id}&token=1&resized_picture=w:700,h:500') as url:
         data = json.loads(url.read())
         return data
 
@@ -43,7 +45,7 @@ async def subcat_pizza(p_id):
     async with aiohttp.ClientSession() as session:
         w = 50
         html = await fetch(session,
-                           f'https://pizzacoffee.by/api/?e=products&parent={p_id}&token=1')
+                           f'https://pizzacoffee.by/api/?e=products&parent={p_id}&token=1&resized_picture=w:700,h:500')
         result = []
         keys = []
         for key, value in html.items():
@@ -76,7 +78,8 @@ async def more_info(product_id):
     products = get_all_products()
     product = products[product_id]
     text = product['name'].replace('&quot;', '"')
-    url = product['picture']
+    print(product)
+    url = product['picture_resized']['src']
     if len(product['prices']) == 0:
         price = product['offers'][list(product['offers'].keys())[0]]['price']
     else:

@@ -45,8 +45,8 @@ class Com:
     @staticmethod
     async def add_user(id, city, full_name, phone_number, context, loop):
         con, cur = await create_con(loop)
-        await cur.execute('insert into users values(%s, %s, %s, %s, %s, %s, %s, %s)',
-                          (id, city, ' ', ' ', context, '', '', datetime.date.today()))
+        await cur.execute('insert into users values(%s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                          (id, city, ' ', ' ', context, '', '', ' ', datetime.date.today()))
         await con.commit()
         con.close()
 
@@ -125,6 +125,13 @@ class Com:
     async def update_tel(id, tel, loop):
         con, cur = await create_con(loop)
         await cur.execute('update users set phone_number=%s where id = %s', (tel, id))
+        await con.commit()
+        con.close()
+
+    @staticmethod
+    async def update_address(id, tel, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('update users set address=%s where id = %s', (tel, id))
         await con.commit()
         con.close()
 
@@ -293,6 +300,13 @@ class Com:
         users = await cur.fetchone()
         con.close()
         return users
+
+    @staticmethod
+    async def add_options(user_id, product_id, offer_id, name, size, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('insert into pizza_options values(%s, %s, %s, %s, %s)', (user_id, product_id, offer_id, name, size))
+        await con.commit()
+        con.close()
 
     @staticmethod
     async def users_from_orders_less_n_date(n, loop):
