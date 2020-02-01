@@ -462,10 +462,10 @@ async def to_cart(chat: Chat, matched):
         if count > 5:
             for category, item in zip(categories, items):
                 text, url, key = await search.more_info(item[0])
-                image = Button(action_body=f'none', columns=6, rows=4, text=text, text_opacity=1, action_type="reply",
+                image = Button(action_body=f'delete-{item[0]}', columns=6, rows=4, text='Убрать из корзины', text_opacity=1, action_type="reply",
                                image=f"https://pizzacoffee.by/{url}")
 
-                title_and_text = Button(action_body=f'none', columns=6, rows=1, action_type="reply",
+                title_and_text = Button(action_body=f'delete-{item[0]}', columns=6, rows=1, action_type="reply",
                                         text=f'<font color=#323232><b>{text}</b></font>', text_size="medium",
                                         text_v_align='middle', text_h_align='left')
 
