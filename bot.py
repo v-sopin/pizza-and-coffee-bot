@@ -24,8 +24,8 @@ bot = Bot(
     avatar='https://media-cdn.tripadvisor.com/media/photo-p/14/3a/c0/60/caption.jpg',
     auth_token='4ae079a5ef27d1d5-9d69c16cf8a5ec41-fdb82d2c3b17ba6',  # Public account auth token
     host="localhost",  # should be available from wide area network
-    port=7000,
-    webhook='https://b7334963.ngrok.io',  # Webhook url
+    port=8000,
+    webhook='https://310df880.ngrok.io',  # Webhook url
 )
 loop.run_until_complete(bot.set_webhook_on_startup())
 app = bot.app
@@ -140,7 +140,7 @@ async def show_pizza(chat, products, product_keys, category_id):
     tmp_list: List[Button] = []
     action_text = 'product_'
     if category_id == '35':
-        action_text = 'pizza_'
+        action_text = 'pizza_to_basket_'
     while i < len(product_keys):
         product = products[product_keys[i]]
         if len(product['prices']) == 0:
@@ -193,18 +193,17 @@ async def show_pizza(chat, products, product_keys, category_id):
     buttons.clear()
 
 
-@bot.command('pizza_')
+@bot.command('options_')
 async def add_options_size(chat: Chat, matched):
     u_id = chat.message.sender.id
     category_id = chat.message.message.text.split('_')[1]
     product_id = chat.message.message.text.split('_')[2]
-    products = search.get_all_products()
+    city = await db.get_city(u_id, loop)
+    products = search.get_products_no_resized(category_id, city)
     products = products[product_id]['offers']
     tmp = list(products.keys())
-    print(products)
     sizes = []
     i = 0
-    print(list(products.keys())[0])
     if '778' in list(products.keys())[0]:
         sizes = ['32', '43']
     else:
@@ -222,50 +221,95 @@ async def add_options_size(chat: Chat, matched):
     buttons = []
     for product in products:
         buttons.append(
-            Button(action_body='size_' + category_id + '_' + product + '_' + product_id, columns=6, rows=1, bg_color="#ffffff", silent=True,
+            Button(action_body='size_' + category_id + '_' + product + '_' + product_id, columns=6, rows=1,
+                   bg_color="#ffffff", silent=True,
                    action_type="reply", text=str(sizes[i]) + ' сантиметров',
                    text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"))
         i += 1
+    button = Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
+                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
+                     text_h_align='center')
+    buttons.append(button)
     await chat.send_text('Выберите размер', keyboard=Keyboard(buttons, bg_color="#FFFFFF"))
 
 
 @bot.command('size_')
 async def add_options_boarders(chat: Chat, matched):
+    u_id = chat.message.sender.id
     category_id = chat.message.message.text.split('_')[1]
     offer_id = chat.message.message.text.split('_')[2]
+
     product_id = chat.message.message.text.split('_')[3]
-    products = search.get_all_products()
+
+    city = await db.get_city(u_id, loop)
+    products = search.get_products_no_resized(category_id, city)
     product = products[product_id]['offers'][offer_id]
     buttons = []
     for tmp in product['borders']:
         name = product['borders'][tmp]['name']
         price = ' (' + product['borders'][tmp]['price'] + ' руб.)'
         buttons.append(
-            Button(action_body='result_' + category_id + '_' + str(product_id) + '_' + str(offer_id) + '_' + str(tmp), columns=6, rows=1,
+            Button(action_body='add-pizza-basket-{}-{}-{}-{}'.format(category_id, product_id, offer_id, tmp),
+                   columns=6, rows=1,
                    bg_color="#ffffff", silent=True, action_type="reply",
                    text=name + price,
                    text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"))
+    button = Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
+                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
+                     text_h_align='center')
+    buttons.append(button)
     await chat.send_text('Выберите бортик для пиццы', keyboard=Keyboard(buttons, bg_color="#FFFFFF"))
 
 
 @bot.command('result_')
 async def add_options_to_db(chat: Chat, matched):
     u_id = chat.message.sender.id
+    city = await db.get_city(u_id, loop)
     category_id = chat.message.message.text.split('_')[1]
     product_id = chat.message.message.text.split('_')[2]
-    print(u_id)
-    print(product_id)
     offer_id = chat.message.message.text.split('_')[3]
     border_id = chat.message.message.text.split('_')[4]
-    products = search.get_all_products()
-    name = products[product_id]['offers'][offer_id]['borders'][border_id]['name']
+    products = search.get_products_no_resized(category_id, city)
+    name_pizza = products[product_id]['offers'][offer_id]['borders'][border_id]['name']
+    size = name_pizza.split(' ')
+    name = str(name_pizza) + ' ' + str(size[-2]) + ' см'
+
     price = products[product_id]['offers'][offer_id]['borders'][border_id]['price']
     await show_product_pizza(product_id, category_id, offer_id, border_id, chat)
     await db.add_options(u_id, product_id, offer_id, name, price, loop)
 
 
+@bot.command('pizza_to_basket_')
+async def pre_show_pizza(chat: Chat, matched):
+    u_id = chat.message.sender.id
+    city = await db.get_city(u_id, loop)
+    category_id = chat.message.message.text.split('_')[3]
+    product_id = chat.message.message.text.split('_')[4]
+    products = search.get_products_no_resized(category_id, city)
+    if product_id in products:
+        product = products[product_id]
+        offer_id = list(product['offers'].keys())
+        image = 'https://pizzacoffee.by' + products[product_id]['picture']
+        text = parse.parse_details_pizza(product, product.get('text'))
+        price = float(product['offers'][offer_id[0]]['price'])
+        text += '\n\n Цена: ' + str(price) + ' руб.'
+
+        title_and_text = [Button(action_body='options_' + str(category_id) + '_' + str(product_id), columns=6, rows=1,
+                                 action_type="reply",
+                                 text="<b>Добавить в корзину</b>", text_size="regular",
+                                 text_v_align='bottom', text_h_align='middle')]
+        await bot.api.send_message(chat.message.sender.id, PictureMessage(media=image))
+        await chat.send_text(text)
+        await chat.send_rich_media(rich_media=Carousel(6, 1, buttons=title_and_text),
+                                   keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
+    else:
+        await chat.send_text('Продукта с таким уникальным номер не сууществует')
+
+
 async def show_product_pizza(product_id, category_id, offer_id, border_id, chat):
-    products = search.get_all_products()
+    u_id = chat.message.sender.id
+    city = await db.get_city(u_id, loop)
+    products = search.get_products(category_id, city)
     if product_id in products:
         product = products[product_id]
         image = 'https://pizzacoffee.by' + products[product_id]['picture']
@@ -274,10 +318,12 @@ async def show_product_pizza(product_id, category_id, offer_id, border_id, chat)
         border = product['offers'][offer_id]['borders'][border_id]['name']
         border_price = float(product['offers'][offer_id]['borders'][border_id]['price'])
         text += '\nДополнительно:\n' + border + '\n\nЦена: ' + str(price + border_price)[:4]
-        title_and_text = [Button(action_body='add-to-basket-{}-{}'.format(category_id, product_id), columns=6, rows=1,
-                                 action_type="reply",
-                                 text="<b>Добавить в корзину</b>", text_size="regular",
-                                 text_v_align='bottom', text_h_align='middle')]
+        title_and_text = [
+            Button(action_body='add-pizza-basket-{}-{}-{}-{}'.format(category_id, product_id, offer_id, border_id),
+                   columns=6, rows=1,
+                   action_type="reply",
+                   text="<b>Добавить в корзину</b>", text_size="regular",
+                   text_v_align='bottom', text_h_align='middle')]
         await bot.api.send_message(chat.message.sender.id, PictureMessage(media=image))
         await chat.send_text(text)
         await chat.send_rich_media(rich_media=Carousel(6, 1, buttons=title_and_text),
@@ -292,9 +338,7 @@ async def show_products(chat: Chat, matched):
     u_id = chat.message.sender.id
     city = await db.get_city(u_id, loop)
     category_id = chat.message.message.text.split('_')[1]
-    print(category_id, city)
     products = search.get_products(category_id, city)
-    print(products)
     product_keys = list(products.keys())
     subcat = ['22', '23']
     if category_id in subcat:
@@ -323,7 +367,6 @@ async def show_products(chat: Chat, matched):
                        text_opacity=1, columns=6, rows=4,
                        action_type="reply",
                        image='https://pizzacoffee.by/' + product['picture_resized']['src'])
-        print('https://pizzacoffee.by/' + product['picture_resized']['src'])
         title_and_text = Button(action_body='product_' + str(category_id) + '_' + str(product_keys[i]), columns=6,
                                 rows=1,
                                 action_type="reply",
@@ -366,9 +409,11 @@ async def show_products(chat: Chat, matched):
 
 @bot.command('product_')
 async def show_product(chat: Chat, matched):
-    products = search.get_all_products()
+    u_id = chat.message.sender.id
+    city = await db.get_city(u_id, loop)
     category_id = chat.message.message.text.split('_')[1]
     product_id = chat.message.message.text.split('_')[2]
+    products = search.get_products_no_resized(category_id, city)
     if product_id in products:
         product = products[product_id]
         image = 'https://pizzacoffee.by' + products[product_id]['picture']
@@ -388,6 +433,52 @@ async def show_product(chat: Chat, matched):
 @bot.command('add-to-basket-')
 async def add(chat: Chat, matched):
     user_id = chat.message.sender.id
+    city = await db.get_city(user_id, loop)
+    category_id = int(chat.message.message.text.split('-')[3])
+    product_id = int(chat.message.message.text.split('-')[4])
+    text, url, price = await search.more_info(str(product_id), str(category_id), city)
+    await db.add_item_to_basket(user_id, product_id, category_id, price, text, loop)
+    await db.update_more_info_c_id(user_id, product_id, loop)
+    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
+                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
+                     text_h_align='center')]
+    await chat.send_text('Какое количество?', keyboard=Keyboard(button, bg_color="#FFFFFF"))
+    await db.update_context(user_id, f'wait-count', loop)
+
+
+@bot.command('add-pizza-basket-')
+async def add(chat: Chat, matched):
+    user_id = chat.message.sender.id
+    city = await db.get_city(user_id, loop)
+    category_id = chat.message.message.text.split('-')[3]
+    product_id = chat.message.message.text.split('-')[4]
+    offer_id = chat.message.message.text.split('-')[5]
+    border_id = chat.message.message.text.split('-')[6]
+    check_pizza = await db.check_pizza_in_basket(user_id, category_id, product_id, offer_id, border_id, loop)
+    product = search.get_products_no_resized(category_id, city)
+
+    product_price = float(product[product_id]['offers'][offer_id]['price'])
+    border_price = float(product[product_id]['offers'][offer_id]['borders'][border_id]['price'])
+    price = product_price + border_price
+    text, url = await search.more_info_non_priced(str(product_id), category_id, city, user_id, loop)
+    if check_pizza is False:
+        await db.add_pizza_to_basket(user_id, product_id, category_id, price, offer_id, border_id, text, loop)
+    await db.update_more_info_c_id(user_id, product_id, loop)
+    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
+                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
+                     text_h_align='center')]
+
+    await chat.send_text('Какое количество?', keyboard=Keyboard(button, bg_color="#FFFFFF"))
+
+    if check_pizza is False:
+        await db.update_context(user_id, f'wait-count', loop)
+    else:
+        await db.update_context(user_id, f'append-count', loop)
+
+
+@bot.command('pizza_to-basket')
+async def add(chat: Chat, matched):
+    user_id = chat.message.sender.id
     category_id = int(chat.message.message.text.split('-')[3])
     product_id = int(chat.message.message.text.split('-')[4])
     text, url, price = await search.more_info(str(product_id))
@@ -396,9 +487,8 @@ async def add(chat: Chat, matched):
     button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
                      text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
                      text_h_align='center')]
-    result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
-    await chat.send_text('Какое количество?')
-    await chat.send_rich_media(rich_media=result, keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
+    await chat.send_text('Какое количество?', keyboard=(Keyboard(button, bg_color="#FFFFFF")))
+    await chat.send_rich_media(keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
     await db.update_context(user_id, f'wait-count', loop)
 
 
@@ -454,6 +544,7 @@ async def change_city(chat: Chat, matched):
 @bot.command('Корзина')
 async def to_cart(chat: Chat, matched):
     u_id = chat.message.sender.id
+    city = await db.get_city(u_id, loop)
     categories, items = await db.get_itemd_from_basket(u_id, loop)
     buttons = []
     count = len(items)
@@ -461,18 +552,33 @@ async def to_cart(chat: Chat, matched):
     if count != 0:
         if count > 5:
             for category, item in zip(categories, items):
-                text, url, key = await search.more_info(item[0])
-                image = Button(action_body=f'delete-{item[0]}', columns=6, rows=4, text='Убрать из корзины', text_opacity=1, action_type="reply",
+                print(category[0])
+                text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
+                count = await db.get_count(item[0], loop)
+                text += ' x ' + str(count)
+                offer_id, border_id = await db.get_offer(item[0], u_id, loop)
+                add = []
+                if offer_id == 0:
+                    add.append(item[0])
+                    delete_from_cart = Button(action_body=f"delete-{item[0]}", columns=6, rows=1,
+                                              action_type="reply",
+                                              text=f'Убрать из корзины', text_size="small",
+                                              text_v_align='middle',
+                                              text_h_align='center')
+                else:
+                    add.append(item[0])
+                    add.append(str(offer_id))
+                    delete_from_cart = Button(action_body=f"delete-{add[0]}-{add[1]}", columns=6, rows=1,
+                                              action_type="reply",
+                                              text=f'Убрать из корзины', text_size="small",
+                                              text_v_align='middle',
+                                              text_h_align='center')
+                image = Button(action_body=f'none', columns=6, rows=4, text=text, text_opacity=1, action_type="reply",
                                image=f"https://pizzacoffee.by/{url}")
 
-                title_and_text = Button(action_body=f'delete-{item[0]}', columns=6, rows=1, action_type="reply",
+                title_and_text = Button(action_body=f'none', columns=6, rows=1, action_type="reply",
                                         text=f'<font color=#323232><b>{text}</b></font>', text_size="medium",
                                         text_v_align='middle', text_h_align='left')
-
-                delete_from_cart = Button(action_body=f"delete-{item[0]}", columns=6, rows=1, action_type="reply",
-                                          text=f'Убрать из корзины', text_size="small",
-                                          text_v_align='middle',
-                                          text_h_align='center')
 
                 buttons.append(image)
                 buttons.append(title_and_text)
@@ -486,28 +592,40 @@ async def to_cart(chat: Chat, matched):
                     results = Carousel(buttons=buttons)
                     await chat.send_rich_media(rich_media=results)
                     buttons.clear()
-            button = [Button(action_body=f'none', columns=6, rows=1, action_type="reply",
+            button = [Button(action_body=f'of-order', columns=6, rows=1, action_type="reply",
                              text='<font color=#ffffff>Оформить заказ</font>', text_size="large", text_v_align='middle',
                              text_h_align='center')]
             result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
             await chat.send_rich_media(rich_media=result, keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
         else:
             for category, item in zip(categories, items):
-                text, url, price = await search.more_info(item[0])
+                print(category[0])
+                text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
                 count = await db.get_count(item[0], loop)
                 text += ' x ' + str(count)
-                print(item)
+                offer_id, border_id = await db.get_offer(item[0], u_id, loop)
+                add = []
+                if offer_id == 0:
+                    add.append(item[0])
+                    delete_from_cart = Button(action_body=f"delete-{item[0]}", columns=6, rows=1,
+                                              action_type="reply",
+                                              text=f'Убрать из корзины', text_size="small",
+                                              text_v_align='middle',
+                                              text_h_align='center')
+                else:
+                    add.append(item[0])
+                    add.append(str(offer_id))
+                    delete_from_cart = Button(action_body=f"delete-{add[0]}-{add[1]}", columns=6, rows=1,
+                                              action_type="reply",
+                                              text=f'Убрать из корзины', text_size="small",
+                                              text_v_align='middle',
+                                              text_h_align='center')
                 image = Button(action_body=f'none', columns=6, rows=4, action_type="open-url",
                                image=f"https://pizzacoffee.by/{url}")  # resized
 
                 title_and_text = Button(action_body=f'none', columns=6, rows=1, action_type="open-url",
                                         text=f'<font color=#323232><b>{text}</b></font>', text_size="medium",
                                         text_v_align='middle', text_h_align='left')
-
-                delete_from_cart = Button(action_body=f"delete-{category[0]}", columns=6, rows=1, action_type="reply",
-                                          text=f'Убрать из корзины', text_size="small",
-                                          text_v_align='middle',
-                                          text_h_align='center')
 
                 buttons.append(image)
                 buttons.append(title_and_text)
@@ -526,9 +644,14 @@ async def to_cart(chat: Chat, matched):
 @bot.command('delete-')
 async def p(chat: Chat, matched):
     u_id = chat.message.sender.id
-    item = chat.message.message.text[7:]
+    product_id = chat.message.message.text.split('-')[1]
+    try:
+        offer_id = chat.message.message.text.split('-')[2]
 
-    await db.delete_from_basket(u_id, item, loop)
+        await db.delete_from_basket_pizza(u_id, product_id, offer_id, loop)
+    except Exception:
+        await db.delete_from_basket(u_id, product_id, loop)
+        print('her1e')
     await chat.send_text('Товар удален из корзины', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
 
 
@@ -544,6 +667,7 @@ async def ord(chat: Chat, matched):
     button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
                      text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
                      text_h_align='center')]
+    result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
     u_id = chat.message.sender.id
     await chat.send_text('Введите ваше ФИО:', keyboard=Keyboard(button, bg_color="#FFFFFF"))
     await db.update_context(u_id, 'wait_fio', loop)
@@ -972,14 +1096,25 @@ async def default(chat: Chat):
                     await db.update_context(u_id, ' ', loop)
         elif context == 'wait-count':
             count = chat.message.message.text
-            if count.isdigit():
+            if count.isdigit() and int(count) > 0:
                 await chat.send_text('Товар добавлен в корзину!', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
                 i_id = await db.get_more_c_id(u_id, loop)
 
                 await db.update_count_to_basket(u_id, i_id, count, loop)
                 await db.update_context(u_id, '', loop)
             else:
-                await chat.send_text('Пожалуйста введите целое число:')
+                await chat.send_text('Пожалуйста, введите целое число больше чем 0')
+        elif context == 'append-count':
+            count = chat.message.message.text
+
+            if count.isdigit() and int(count) > 0:
+                await chat.send_text('Товар добавлен в корзину!', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
+                i_id = await db.get_more_c_id(u_id, loop)
+
+                await db.append_count_to_basket(u_id, i_id, count, loop)
+                await db.update_context(u_id, '', loop)
+            else:
+                await chat.send_text('Пожалуйста, введите целое число больше чем 0')
         elif context == 'wait_password':
             password = chat.message.message.text
             if password == ms.PASSWORD:
@@ -1172,7 +1307,8 @@ async def default(chat: Chat):
         elif context == 'wait_tel':
             tel = chat.message.message.text
             await db.update_tel(u_id, tel, loop)
-            await chat.send_text('Спасибо! Теперь отправьте мне ваш адрес: ', keyboard=Keyboard(button, bg_color="#FFFFFF"))
+            await chat.send_text('Спасибо! Теперь отправьте мне ваш адрес: ',
+                                 keyboard=Keyboard(button, bg_color="#FFFFFF"))
             await db.update_context(u_id, 'wait_address', loop)
         elif context == 'wait_address':
             address = chat.message.message.text

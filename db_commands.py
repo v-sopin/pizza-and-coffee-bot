@@ -140,11 +140,36 @@ class Com:
         con, cur = await create_con(loop)
 
         if price == '' or price == ' ':
-            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, 0, name))
+            await cur.execute('insert into basket (u_id, i_id, c_id, count, price, name) values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, 0, name))
             await con.commit()
             con.close()
         else:
-            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, float(price), name))
+            await cur.execute('insert into basket (u_id, i_id, c_id, count, price, name) values(%s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, float(price), name))
+            await con.commit()
+            con.close()
+
+    @staticmethod
+    async def check_pizza_in_basket(user_id, category_id, product_id, offer_id, border_id, loop):
+        con, cur = await create_con(loop)
+
+        await cur.execute(('select name from basket where (u_id = %s and c_id = %s and i_id = %s and offer_id = %s and border_id = %s)'), (user_id, category_id, product_id, offer_id, border_id))
+        await con.commit()
+        count = await cur.fetchone()
+        if not count:
+            return False
+        else:
+            return True
+
+    @staticmethod
+    async def add_pizza_to_basket(id, i_id, c_id, price, offer_id, border_id, name, loop):
+        con, cur = await create_con(loop)
+
+        if price == '' or price == ' ':
+            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, 0, offer_id, border_id, name))
+            await con.commit()
+            con.close()
+        else:
+            await cur.execute('insert into basket values(%s, %s, %s, %s, %s, %s, %s, %s)', (id, i_id, c_id, 0, float(price), offer_id, border_id, name))
             await con.commit()
             con.close()
 
@@ -160,9 +185,26 @@ class Com:
         return result
 
     @staticmethod
+    async def get_offer(product_id, user_id, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('select offer_id, border_id from basket where (u_id = %s and i_id = %s)', (user_id, product_id))
+        offer_id = await cur.fetchall()
+        if len(offer_id) is 0 or offer_id[0][0] is None:
+            return 0, 0
+        else:
+            return offer_id[0][0], offer_id[0][1]
+
+    @staticmethod
     async def update_count_to_basket(id, c_id, count, loop):
         con, cur = await create_con(loop)
         await cur.execute('update basket set count=%s where u_id = %s and i_id = %s', (count, id, c_id))
+        await con.commit()
+        con.close()
+
+    @staticmethod
+    async def append_count_to_basket(id, c_id, count, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('update basket set count= count + %s where u_id = %s and i_id = %s', (count, id, c_id))
         await con.commit()
         con.close()
 
@@ -203,7 +245,14 @@ class Com:
     @staticmethod
     async def delete_from_basket(id, item_id, loop):
         con, cur = await create_con(loop)
-        await cur.execute('delete from basket where u_id = %s and c_id = %s', (id, str(item_id)))
+        await cur.execute('delete from basket where u_id = %s and i_id = %s', (id, str(item_id)))
+        await con.commit()
+        con.close()
+
+    @staticmethod
+    async def delete_from_basket_pizza(id, item_id, offer_id, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('delete from basket where(u_id = %s and i_id = %s and offer_id = %s)', (id, str(item_id), offer_id))
         await con.commit()
         con.close()
 

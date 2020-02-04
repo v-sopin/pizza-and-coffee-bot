@@ -5,15 +5,15 @@ import requests
 from db_commands import Com as db
 
 
-def get_all_products():
-    with urllib.request.urlopen('https://pizzacoffee.by/api/?e=products&token=1&resized_picture=w:700,h:500') as url:
+def get_products(categories, city):
+    url = 'https://pizzacoffee.by/api/?e=products&parent=' + categories + '&token=1&city=' + city + '&resized_picture=w:700,h:500'
+    with urllib.request.urlopen(url) as url:
         data = json.loads(url.read())
         return data
 
 
-def get_products(categories, city):
-    url = 'https://pizzacoffee.by/api/?e=products&parent=' + categories + '&token=1&city=' + city + '&resized_picture=w:700,h:500'
-    print(url)
+def get_products_no_resized(categories, city):
+    url = 'https://pizzacoffee.by/api/?e=products&parent=' + categories + '&token=1&city=' + city
     with urllib.request.urlopen(url) as url:
         data = json.loads(url.read())
         return data
@@ -31,7 +31,6 @@ async def sections(city):
         for key, value in html.items():
             if value["show_main"] == "1":
                 result.append(value)
-        print(result)
     return result
 
 
@@ -74,11 +73,10 @@ async def more_info_pizza(p_id, c_id):
     return s, url
 
 
-async def more_info(product_id):
-    products = get_all_products()
+async def more_info(product_id, category_id, city):
+    products = get_products(category_id, city)
     product = products[product_id]
     text = product['name'].replace('&quot;', '"')
-    print(product)
     url = product['picture_resized']['src']
     if len(product['prices']) == 0:
         price = product['offers'][list(product['offers'].keys())[0]]['price']
@@ -87,15 +85,19 @@ async def more_info(product_id):
     return text, url, price
 
 
-async def get_price(product_id):
-    products = get_all_products()
-    product = products[str(product_id)]
-    if len(product['prices']) == 0:
-        price = product['offers'][list(product['offers'].keys())[0]]['price']
+async def more_info_non_priced(product_id, category_id, city, user_id, loop):
+    products = get_products(category_id, city)
+    product = products[product_id]
+    offer_id, border_id = await db.get_offer(product_id, user_id, loop)
+    if offer_id == 0:
+        name = product['name'].replace('&quot;', '"')
     else:
-        price = list(product['prices'])[0]["PRICE"]
-
-    return price
+        text = product['name'].replace('&quot;', '"')
+        name_pizza = products[product_id]['offers'][str(offer_id)]['borders'][str(border_id)]['name']
+        size = name_pizza.split(' ')
+        name = text + ' ' + str(size[-2]) + ' см'
+    url = product['picture_resized']['src']
+    return name, url
 
 
 async def get():
