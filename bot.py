@@ -25,7 +25,7 @@ bot = Bot(
     auth_token='4ae079a5ef27d1d5-9d69c16cf8a5ec41-fdb82d2c3b17ba6',  # Public account auth token
     host="localhost",  # should be available from wide area network
     port=8000,
-    webhook='https://310df880.ngrok.io',  # Webhook url
+    webhook='https://e2435a86.ngrok.io',  # Webhook url
 )
 loop.run_until_complete(bot.set_webhook_on_startup())
 app = bot.app
@@ -112,6 +112,7 @@ async def show_subcat(chat, category_id):
         buttons.append(title_and_text)
         i += 1
     i *= 2
+
     while i > 0:
         if i > 11:
             tmp_i = i - 12
@@ -144,7 +145,12 @@ async def show_pizza(chat, products, product_keys, category_id):
     while i < len(product_keys):
         product = products[product_keys[i]]
         if len(product['prices']) == 0:
-            price = product['offers'][list(product['offers'].keys())[0]]['price']
+            prices = list(product['offers'].keys())
+            lowest_price = float(product['offers'][list(product['offers'].keys())[0]]['price'])
+            for price in prices:
+                if float(product['offers'][price]['price']) < lowest_price:
+                    lowest_price = float(product['offers'][price]['price'])
+            price = lowest_price
         else:
             price = list(product['prices'])[0]["PRICE"]
         if product.get('name') is None:
@@ -291,7 +297,14 @@ async def pre_show_pizza(chat: Chat, matched):
         offer_id = list(product['offers'].keys())
         image = 'https://pizzacoffee.by' + products[product_id]['picture']
         text = parse.parse_details_pizza(product, product.get('text'))
-        price = float(product['offers'][offer_id[0]]['price'])
+
+        prices = list(product['offers'].keys())
+        lowest_price = float(product['offers'][list(product['offers'].keys())[0]]['price'])
+        for price in prices:
+            if float(product['offers'][price]['price']) < lowest_price:
+                lowest_price = float(product['offers'][price]['price'])
+        price = lowest_price
+
         text += '\n\n Цена: ' + str(price) + ' руб.'
 
         title_and_text = [Button(action_body='options_' + str(category_id) + '_' + str(product_id), columns=6, rows=1,
@@ -552,7 +565,6 @@ async def to_cart(chat: Chat, matched):
     if count != 0:
         if count > 5:
             for category, item in zip(categories, items):
-                print(category[0])
                 text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
                 count = await db.get_count(item[0], loop)
                 text += ' x ' + str(count)
@@ -579,7 +591,6 @@ async def to_cart(chat: Chat, matched):
                 title_and_text = Button(action_body=f'none', columns=6, rows=1, action_type="reply",
                                         text=f'<font color=#323232><b>{text}</b></font>', text_size="medium",
                                         text_v_align='middle', text_h_align='left')
-
                 buttons.append(image)
                 buttons.append(title_and_text)
                 buttons.append(delete_from_cart)
@@ -599,7 +610,6 @@ async def to_cart(chat: Chat, matched):
             await chat.send_rich_media(rich_media=result, keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
         else:
             for category, item in zip(categories, items):
-                print(category[0])
                 text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
                 count = await db.get_count(item[0], loop)
                 text += ' x ' + str(count)
@@ -651,7 +661,6 @@ async def p(chat: Chat, matched):
         await db.delete_from_basket_pizza(u_id, product_id, offer_id, loop)
     except Exception:
         await db.delete_from_basket(u_id, product_id, loop)
-        print('her1e')
     await chat.send_text('Товар удален из корзины', keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
 
 
