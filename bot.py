@@ -566,7 +566,7 @@ async def to_cart(chat: Chat, matched):
         if count > 5:
             for category, item in zip(categories, items):
                 text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
-                count = await db.get_count(item[0], loop)
+                count = await db.get_count(item[0], u_id, loop)
                 text += ' x ' + str(count)
                 offer_id, border_id = await db.get_offer(item[0], u_id, loop)
                 add = []
@@ -611,7 +611,7 @@ async def to_cart(chat: Chat, matched):
         else:
             for category, item in zip(categories, items):
                 text, url = await search.more_info_non_priced(item[0], category[0], city, u_id, loop)
-                count = await db.get_count(item[0], loop)
+                count = await db.get_count(item[0], u_id, loop)
                 text += ' x ' + str(count)
                 offer_id, border_id = await db.get_offer(item[0], u_id, loop)
                 add = []

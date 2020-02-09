@@ -219,9 +219,9 @@ class Com:
         return products, items
 
     @staticmethod
-    async def get_count(product_id, loop):
+    async def get_count(product_id, viber_id, loop):
         con, cur = await create_con(loop)
-        await cur.execute('select count from basket where i_id = %s', product_id)
+        await cur.execute('select count from basket where i_id = %s and u_id = %s', (product_id, viber_id))
         count = await cur.fetchone()
         con.close()
         return count[0]
