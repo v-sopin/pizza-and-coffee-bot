@@ -16,21 +16,23 @@ import text_parse as parse
 import re
 from config import TOKEN
 
+from keyboards import big_blank_button_jpg, big_go_back_jpg
+
 logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
 
 bot = Bot(
     name='Pizza & coffee',
     avatar='https://media-cdn.tripadvisor.com/media/photo-p/14/3a/c0/60/caption.jpg',
-    auth_token='4ae079a5ef27d1d5-9d69c16cf8a5ec41-fdb82d2c3b17ba6',  # Public account auth token
+    auth_token=TOKEN,  # Public account auth token
     host="localhost",  # should be available from wide area network
     port=8000,
-    webhook='https://e2435a86.ngrok.io',  # Webhook url
+    webhook='https://6d8ac35f.ngrok.io',  # Webhook url
 )
 loop.run_until_complete(bot.set_webhook_on_startup())
 app = bot.app
 
-# loop.run_until_complete(db.clear_users(loop))
+#loop.run_until_complete(db.clear_users(loop))
 
 '''
 
@@ -51,10 +53,10 @@ async def start(chat: Chat, matched):
         keyboard = []
         for key, value in city:
             if key != 'minsk':
-                b = Button(action_body=value["name"], columns=6, rows=1, bg_color="#ffffff", silent=True,
+                b = Button(action_body=value["name"], columns=6, rows=1, silent=True,
                            action_type="reply",
-                           text=value["name"], text_size="regular", text_opacity=60, text_h_align="center",
-                           text_v_align="middle")
+                           text=value["name"], text_size="regular", text_opacity=100, text_h_align="center",
+                           text_v_align="middle", bg_media=big_blank_button_jpg, bg_media_type='picture')
                 keyboard.append(b)
         await chat.send_text(ms.welcome, keyboard=Keyboard(keyboard, bg_color="#FFFFFF"))
         await db.add_user_for_stat(chat.message.sender.id, loop)
@@ -227,14 +229,14 @@ async def add_options_size(chat: Chat, matched):
     buttons = []
     for product in products:
         buttons.append(
-            Button(action_body='size_' + category_id + '_' + product + '_' + product_id, columns=6, rows=1,
-                   bg_color="#ffffff", silent=True,
+            Button(action_body='size_' + category_id + '_' + product + '_' + product_id, columns=6, rows=1, silent=True,
                    action_type="reply", text=str(sizes[i]) + ' сантиметров',
-                   text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"))
+                   text_size="regular", text_opacity=100, text_h_align="center", text_v_align="middle", bg_media=big_blank_button_jpg, bg_media_type='picture'))
         i += 1
-    button = Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')
+    button = Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+                     text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1,
+                     text_h_align="center",
+                     text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')
     buttons.append(button)
     await chat.send_text('Выберите размер', keyboard=Keyboard(buttons, bg_color="#FFFFFF"))
 
@@ -259,10 +261,11 @@ async def add_options_boarders(chat: Chat, matched):
                    columns=6, rows=1,
                    bg_color="#ffffff", silent=True, action_type="reply",
                    text=name + price,
-                   text_size="regular", text_opacity=60, text_h_align="center", text_v_align="middle"))
-    button = Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')
+                   text_size="regular", text_opacity=100, text_h_align="center", text_v_align="middle", bg_media=big_blank_button_jpg, bg_media_type='picture'))
+    button = Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+                    text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1,
+                    text_h_align="center",
+                    text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')
     buttons.append(button)
     await chat.send_text('Выберите бортик для пиццы', keyboard=Keyboard(buttons, bg_color="#FFFFFF"))
 
@@ -294,7 +297,7 @@ async def pre_show_pizza(chat: Chat, matched):
     products = search.get_products_no_resized(category_id, city)
     if product_id in products:
         product = products[product_id]
-        offer_id = list(product['offers'].keys())
+
         image = 'https://pizzacoffee.by' + products[product_id]['picture']
         text = parse.parse_details_pizza(product, product.get('text'))
 
@@ -477,9 +480,11 @@ async def add(chat: Chat, matched):
     if check_pizza is False:
         await db.add_pizza_to_basket(user_id, product_id, category_id, price, offer_id, border_id, text, loop)
     await db.update_more_info_c_id(user_id, product_id, loop)
-    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')]
+
+    button = [Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+                     text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1,
+                     text_h_align="center",
+                     text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')]
 
     await chat.send_text('Какое количество?', keyboard=Keyboard(button, bg_color="#FFFFFF"))
 
@@ -497,9 +502,9 @@ async def add(chat: Chat, matched):
     text, url, price = await search.more_info(str(product_id))
     await db.add_item_to_basket(user_id, product_id, category_id, price, text, loop)
     await db.update_more_info_c_id(user_id, product_id, loop)
-    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')]
+    button = [Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+               text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1, text_h_align="center",
+               text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')]
     await chat.send_text('Какое количество?', keyboard=(Keyboard(button, bg_color="#FFFFFF")))
     await chat.send_rich_media(keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
     await db.update_context(user_id, f'wait-count', loop)
@@ -534,15 +539,15 @@ async def change_city(chat: Chat, matched):
     keyboard = []
     for key, value in city:
         if key != 'minsk':
-            b = Button(action_body=value["name"], columns=6, rows=1, bg_color="#ffffff", silent=True,
+            b = Button(action_body=value["name"], columns=6, rows=1, silent=True,
                        action_type="reply",
-                       text=value["name"], text_size="regular", text_opacity=60, text_h_align="center",
-                       text_v_align="middle")
+                       text=f"<font color=#000000>{value['name']}</font>", text_size="regular", text_opacity=100, text_h_align="center",
+                       text_v_align="middle", bg_media=big_blank_button_jpg, bg_media_type='picture')
             keyboard.append(b)
     keyboard.append(
-        Button(action_body='otmena', columns=6, rows=1, bg_color="#ffffff", silent=True, action_type="reply",
-               text='<font color=#ffffff>Отмена</font>', text_size="regular", text_opacity=60, text_h_align="center",
-               text_v_align="middle"))
+        Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+               text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1, text_h_align="center",
+               text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture'))
     await chat.send_text(ms.change_city, keyboard=Keyboard(keyboard, bg_color="#FFFFFF"))
     await db.update_context(u_id, f'wait_city', loop)
 
@@ -673,9 +678,10 @@ async def p(chat: Chat, matched):
 
 @bot.command('of-order')
 async def ord(chat: Chat, matched):
-    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')]
+    button = [Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+                    text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1,
+                    text_h_align="center",
+                    text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')]
     result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
     u_id = chat.message.sender.id
     await chat.send_text('Введите ваше ФИО:', keyboard=Keyboard(button, bg_color="#FFFFFF"))
@@ -708,7 +714,7 @@ async def nnum(chat: Chat, matched):
 
 @bot.command('Какие есть способы оплаты?')
 async def nnum(chat: Chat, matched):
-    text = 'Способы оплаты при заказе через чат-бота:\n\n-Наличными курьеру\n-Банковской картой курьеру'
+    text = 'Способы оплаты при заказе через чат-бота:\n\n-Наличными курьеру\n-Банковской картой курьеру\n-Оплата картой на сайте'
     await chat.send_text(text, keyboard=Keyboard(kb.ask_kb, bg_color="#FFFFFF"))
 
 
@@ -1085,9 +1091,11 @@ async def sp(chat: Chat):
 
 @bot.default('')
 async def default(chat: Chat):
-    button = [Button(action_body=f'otmena', columns=6, rows=1, action_type="reply",
-                     text='<font color=#ffffff>Отмена</font>', text_size="large", text_v_align='middle',
-                     text_h_align='center')]
+    button = [Button(action_body='otmena', columns=6, rows=1, silent=True, action_type="reply",
+                     text='<font color=#ffffff>Назад</font>', text_size="regular", text_opacity=1,
+                     text_h_align="center",
+                     text_v_align="middle", bg_media=big_go_back_jpg, bg_media_type='picture')]
+
     if await db.user_exist(chat.message.sender.id, loop) is False:
         await chat.send_text('Для начала работы с ботом необходимо написать Старт или Start')
     else:
@@ -1323,8 +1331,9 @@ async def default(chat: Chat):
             address = chat.message.message.text
             await db.update_address(u_id, address, loop)
             await db.update_context(u_id, '', loop)
-            status, error_msg = await search.json_(u_id, loop)
-
+            #status, error_msg = await search.json_(u_id, loop)
+            status = True
+            error_msg = ''
             if status is True:
                 await chat.send_text('Ваш заказ оформлен, ожидайте звонка оператора.',
                                      keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
