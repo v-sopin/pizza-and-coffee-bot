@@ -40,7 +40,7 @@ class Com:
         if user is None:
             return None
 
-        return User(user[0], user[1], user[2], user[3], user[4], user[5], user[6], user[7])
+        return User(user[0], user[1], user[2], user[3], user[4], user[5], user[6], user[7], user[8], user[9])
 
     @staticmethod
     async def add_user(id, city, full_name, phone_number, context, loop):
@@ -132,6 +132,13 @@ class Com:
     async def update_address(id, tel, loop):
         con, cur = await create_con(loop)
         await cur.execute('update users set address=%s where id = %s', (tel, id))
+        await con.commit()
+        con.close()
+
+    @staticmethod
+    async def update_house(id, house, loop):
+        con, cur = await create_con(loop)
+        await cur.execute('update users set house=%s where id = %s', (house, id))
         await con.commit()
         con.close()
 
@@ -305,7 +312,7 @@ class Com:
     @staticmethod
     async def add_order(u_id, sum, loop):
         con, cur = await create_con(loop)
-        datetime_now = datetime.datetime.today()
+        datetime_now = datetime.datetime.today().date()
         await cur.execute('insert into orders values(%s, %s, %s)', (u_id, sum, datetime_now))
         await con.commit()
         con.close()

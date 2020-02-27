@@ -130,10 +130,16 @@ async def json_(u_id, loop):
 
     r = []
     for item in items:
-        r.append({"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count})
+        offer_id, border_id = await db.get_offer(item.i_id, u_id, loop)
+        if border_id is not None:
+            product_data = {"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count, "properties": {"border": border_id}}
+        else:
+            product_data = {"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count}
+        r.append(product_data)
     res = json.dumps(r)
 
-    link = f"https://pizzacoffee.by/api/?e=order&login={user.phone_number}&password={user.phone_number}&username={user.full_name}&phone={user.phone_number}&products={res}&token=1"
+    link = f"https://pizzacoffee.by/api/?e=order&city={user.city}&street={user.address}&house={user.house}&apartments=0&deliveryAddress={user.address + ' ' + str(user.house)}&login={user.phone_number}&password={user.phone_number}&username={user.full_name}&phone={user.phone_number}&products={res}&token=1"
+
     new_link = str(link.replace('[', ''))
     new_link = new_link.replace(']', '')
 

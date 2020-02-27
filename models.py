@@ -8,9 +8,8 @@ class Basket:
         self.name = name
 
 
-
 class User:
-    def __init__(self, id, city, full_name, phone_number, context, p_id, c_id, date):
+    def __init__(self, id, city, full_name, phone_number, context, p_id, c_id, address, date, house):
         self.id = id
         self.city = city
         self.full_name = full_name
@@ -18,4 +17,6 @@ class User:
         self.context = context
         self.p_id = p_id
         self.c_id = c_id
+        self.address = address
         self.date = date
+        self.house = house

@@ -27,7 +27,7 @@ bot = Bot(
     auth_token=TOKEN,  # Public account auth token
     host="localhost",  # should be available from wide area network
     port=8000,
-    webhook='https://6d8ac35f.ngrok.io',  # Webhook url
+    webhook='https://bc48164c.ngrok.io',  # Webhook url
 )
 loop.run_until_complete(bot.set_webhook_on_startup())
 app = bot.app
@@ -609,7 +609,7 @@ async def to_cart(chat: Chat, matched):
                     await chat.send_rich_media(rich_media=results)
                     buttons.clear()
             button = [Button(action_body=f'of-order', columns=6, rows=1, action_type="reply",
-                             text='<font color=#ffffff>Оформить заказ</font>', text_size="large", text_v_align='middle',
+                             text='Оформить заказ', text_size="large", text_v_align='middle',
                              text_h_align='center')]
             result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
             await chat.send_rich_media(rich_media=result, keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
@@ -648,7 +648,7 @@ async def to_cart(chat: Chat, matched):
             results = Carousel(buttons=buttons)
             await chat.send_rich_media(rich_media=results)
             button = [Button(action_body=f'of-order', columns=6, rows=1, action_type="reply",
-                             text='<font color=#ffffff>Оформить заказ</font>', text_size="large", text_v_align='middle',
+                             text='Оформить заказ', text_size="large", text_v_align='middle',
                              text_h_align='center')]
             result = Carousel(buttons=button, buttons_group_columns=6, buttons_group_rows=1)
             await chat.send_rich_media(rich_media=result, keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
@@ -1324,28 +1324,40 @@ async def default(chat: Chat):
         elif context == 'wait_tel':
             tel = chat.message.message.text
             await db.update_tel(u_id, tel, loop)
-            await chat.send_text('Спасибо! Теперь отправьте мне ваш адрес: ',
+            await chat.send_text('Спасибо! Теперь отправьте мне название вашей улицы: ',
                                  keyboard=Keyboard(button, bg_color="#FFFFFF"))
             await db.update_context(u_id, 'wait_address', loop)
         elif context == 'wait_address':
             address = chat.message.message.text
             await db.update_address(u_id, address, loop)
             await db.update_context(u_id, '', loop)
-            #status, error_msg = await search.json_(u_id, loop)
-            status = True
-            error_msg = ''
+            await chat.send_text('Спасибо! Теперь отправьте мне номер вашего дома: ',
+                             keyboard=Keyboard(button, bg_color="#FFFFFF"))
+            await db.update_context(u_id, 'wait_house', loop)
+        elif context == 'wait_house':
+            try:
+                house = int(chat.message.message.text)
+            except Exception:
+                await chat.send_text('Не корректный формат, попробуйте еще раз',
+                                     keyboard=Keyboard(button, bg_color="#FFFFFF"))
+                return
+            await db.update_house(u_id, house, loop)
+            await db.update_context(u_id, '', loop)
+            status, error_msg = await search.json_(u_id, loop)
+
             if status is True:
                 await chat.send_text('Ваш заказ оформлен, ожидайте звонка оператора.',
                                      keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
-                # items_in_cart = await db.get_user_basket_items(u_id, loop)
-                # totap_price = 0
-                # for item in items_in_cart:
-                #     totap_price += item.price
-                # await db.add_order(u_id, totap_price, loop)
-                # await db.clear_user_basket(u_id, loop)
+                items_in_cart = await db.get_user_basket_items(u_id, loop)
+                totap_price = 0
+                for item in items_in_cart:
+                     totap_price += item.price
+                await db.add_order(u_id, totap_price, loop)
+                await db.clear_user_basket(u_id, loop)
             else:
-                await chat.send_text(f'При оформлении заказа произошла ошибка: {error_msg}',
-                                     keyboard=Keyboard(kb.start, bg_color="#FFFFFF"))
+                await chat.send_text('Вы указали некорректное название улицы! Попробуйте еще раз.',
+                                     keyboard=Keyboard(button, bg_color="#FFFFFF"))
+                await db.update_context(u_id, 'wait_address', loop)
 
         elif context == 'wait_start_date':
             date = chat.message.message.text
