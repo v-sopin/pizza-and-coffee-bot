@@ -132,9 +132,9 @@ async def json_(u_id, loop):
     for item in items:
         offer_id, border_id = await db.get_offer(item.i_id, u_id, loop)
         if border_id is not None:
-            product_data = {"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count, "properties": {"border": border_id}}
+            product_data = {"id": int(item.i_id), "name": item.name, "price": item.price, "quantity": item.count, "properties": {"border": border_id}}
         else:
-            product_data = {"id": item.i_id, "name": item.name, "price": item.price, "quantity": item.count}
+            product_data = {"id": int(item.i_id), "name": item.name, "price": item.price, "quantity": item.count}
         r.append(product_data)
     res = json.dumps(r)
 

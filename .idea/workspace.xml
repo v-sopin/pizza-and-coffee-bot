@@ -4,9 +4,8 @@
     <list default="true" id="487cab6a-9999-4eea-b236-39d2f53ae882" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/bot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db_commands.py" beforeDir="false" afterPath="$PROJECT_DIR$/db_commands.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/search.py" beforeDir="false" afterPath="$PROJECT_DIR$/search.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -39,7 +38,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../pc-com-ua-viber-bot" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -185,29 +184,30 @@
     <option name="LAST_COMMIT_MESSAGE" value="Изменены кнопки меню" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="740" y="277" key="FileChooserDialogImpl" timestamp="1581942642405">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state x="592" y="219" key="FileChooserDialogImpl" timestamp="1586366560262">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
+    <state x="592" y="219" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1586366560262" />
     <state x="740" y="277" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1581942642405" />
-    <state width="1509" height="171" key="GridCell.Tab.0.bottom" timestamp="1582817936195">
+    <state width="1509" height="339" key="GridCell.Tab.0.bottom" timestamp="1586274130907">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1509" height="171" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1582817936195" />
+    <state width="1509" height="339" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1586274130907" />
     <state width="1893" height="235" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1582109792055" />
-    <state width="1509" height="171" key="GridCell.Tab.0.center" timestamp="1582817936194">
+    <state width="1509" height="339" key="GridCell.Tab.0.center" timestamp="1586274130906">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1509" height="171" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1582817936194" />
+    <state width="1509" height="339" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1586274130906" />
     <state width="1893" height="235" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1582109792055" />
-    <state width="1509" height="171" key="GridCell.Tab.0.left" timestamp="1582817936194">
+    <state width="1509" height="339" key="GridCell.Tab.0.left" timestamp="1586274130906">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1509" height="171" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1582817936194" />
+    <state width="1509" height="339" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1586274130906" />
     <state width="1893" height="235" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1582109792054" />
-    <state width="1509" height="171" key="GridCell.Tab.0.right" timestamp="1582817936195">
+    <state width="1509" height="339" key="GridCell.Tab.0.right" timestamp="1586274130906">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1509" height="171" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1582817936195" />
+    <state width="1509" height="339" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1586274130906" />
     <state width="1893" height="235" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1582109792055" />
     <state x="707" y="181" key="RollbackChangesDialog" timestamp="1581427417712">
       <screen x="0" y="0" width="1920" height="1040" />
@@ -217,9 +217,10 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="463" y="153" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1581429682133" />
-    <state x="668" y="347" key="com.intellij.ide.util.TipDialog" timestamp="1581428708599">
-      <screen x="0" y="0" width="1920" height="1040" />
+    <state x="534" y="275" key="com.intellij.ide.util.TipDialog" timestamp="1586366288340">
+      <screen x="0" y="0" width="1536" height="824" />
     </state>
+    <state x="534" y="275" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1586366288340" />
     <state x="668" y="347" key="com.intellij.ide.util.TipDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1581428708599" />
   </component>
   <component name="XDebuggerManager">

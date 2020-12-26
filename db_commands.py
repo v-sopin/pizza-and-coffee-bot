@@ -45,8 +45,9 @@ class Com:
     @staticmethod
     async def add_user(id, city, full_name, phone_number, context, loop):
         con, cur = await create_con(loop)
-        await cur.execute('insert into users values(%s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                          (id, city, ' ', ' ', context, '', '', ' ', datetime.date.today()))
+        print(city)
+        await cur.execute('insert into users values(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                          (id, city, ' ', ' ', context, '', '', ' ', datetime.date.today(), 1))
         await con.commit()
         con.close()
 
